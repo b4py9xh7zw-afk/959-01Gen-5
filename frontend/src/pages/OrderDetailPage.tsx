@@ -11,6 +11,8 @@ const OrderDetailPage: React.FC = () => {
   const [refundReason, setRefundReason] = useState('')
   const [refunding, setRefunding] = useState(false)
   const [refundSuccess, setRefundSuccess] = useState(false)
+  const [downloadingPack, setDownloadingPack] = useState(false)
+  const [downloadingLicense, setDownloadingLicense] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -45,15 +47,31 @@ const OrderDetailPage: React.FC = () => {
     }
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (order) {
-      downloadsAPI.downloadPack(order.licensePurchase?.id || order.id)
+      try {
+        setDownloadingPack(true)
+        await downloadsAPI.downloadPack(order.licensePurchaseId)
+      } catch (error) {
+        console.error('Download pack failed:', error)
+        alert('下载采样包失败，请重试')
+      } finally {
+        setDownloadingPack(false)
+      }
     }
   }
 
-  const handleDownloadLicense = () => {
+  const handleDownloadLicense = async () => {
     if (order) {
-      downloadsAPI.downloadLicense(order.licensePurchase?.id || order.id)
+      try {
+        setDownloadingLicense(true)
+        await downloadsAPI.downloadLicense(order.licensePurchaseId)
+      } catch (error) {
+        console.error('Download license failed:', error)
+        alert('下载授权证明失败，请重试')
+      } finally {
+        setDownloadingLicense(false)
+      }
     }
   }
 
@@ -229,22 +247,41 @@ const OrderDetailPage: React.FC = () => {
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={handleDownload}
-                disabled={!order.canDownloadUpdates && order.isRefunded}
+                disabled={(!order.canDownloadUpdates && order.isRefunded) || downloadingPack}
                 className="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                下载采样包
+                {downloadingPack ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white mr-2"></div>
+                    下载中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    下载采样包
+                  </>
+                )}
               </button>
               <button
                 onClick={handleDownloadLicense}
-                className="btn-secondary flex items-center"
+                disabled={downloadingLicense}
+                className="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                下载授权证明
+                {downloadingLicense ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500/30 border-t-primary-500 mr-2"></div>
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    下载授权证明
+                  </>
+                )}
               </button>
               {order.status === OrderStatus.COMPLETED && !order.isRefunded && (
                 <button

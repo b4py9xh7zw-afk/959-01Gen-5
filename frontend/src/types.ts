@@ -57,6 +57,7 @@ export interface Order {
   licenseTierName: string
   amount: number
   createdAt: string
+  licensePurchaseId: number
   licenseKey: string
   canDownloadUpdates: boolean
   isRefunded: boolean
@@ -67,6 +68,7 @@ export interface Order {
 }
 
 export interface OrderDetail extends Order {
+  licensePurchaseId: number
   licenseTierDescription: string
   licenseTierFeatures: string[]
   paymentMethod: string
